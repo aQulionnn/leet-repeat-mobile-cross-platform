@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem_list.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_repository.dart';
 
@@ -45,10 +46,7 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
           itemBuilder: (context, index) => Card(
             child: InkWell(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => Center(child: Text('Problems...'))),
-                );
+                context.go('/problem-lists/${snapshot.data![index].name}');
               },
               child: ListTile(
                 title: Text(snapshot.data![index].name),

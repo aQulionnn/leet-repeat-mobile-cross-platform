@@ -3,14 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 ThemeData lightMode = ThemeData(
   colorScheme: ColorScheme.fromSeed(
-    seedColor: Colors.orange,
+    seedColor: Colors.yellowAccent,
     brightness: Brightness.light
   )
 );
 
 ThemeData darkMode = ThemeData(
   colorScheme: ColorScheme.fromSeed(
-    seedColor: Colors.purple,
+    seedColor: Colors.deepPurpleAccent,
     brightness: Brightness.dark
   )
 );

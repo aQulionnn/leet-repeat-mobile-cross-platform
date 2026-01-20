@@ -1,27 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
 import 'package:provider/provider.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  var selectedIndex = 0;
+class HomeScreen extends StatelessWidget {
+  final Widget child;
+  const HomeScreen({required this.child, super.key});
 
   @override
   Widget build(BuildContext context) {
-    Widget screen;
-
-    switch (selectedIndex) {
-      case 0:
-        screen = ProblemListsScreen();
-      default:
-        throw UnimplementedError('no widget for $selectedIndex');
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
@@ -36,11 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: Text('Problem Lists'),
                     ),
                   ],
-                  selectedIndex: selectedIndex,
+                  selectedIndex: 0,
                   onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex = value;
-                    });
+                    if (value == 0) context.go('/problem-lists');
                   },
                   trailing: Expanded(
                     child: Align(
@@ -61,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: Container(
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  child: screen,
+                  child: child,
                 ),
               ),
             ],
