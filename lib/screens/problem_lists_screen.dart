@@ -18,13 +18,13 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Center(child: _problemList()),
+        Center(child: _problemLists()),
         Positioned(bottom: 24, right: 24, child: _addProblemListButton()),
       ],
     );
   }
 
-  Widget _problemList() {
+  Widget _problemLists() {
     return FutureBuilder(
       future: _problemListRepository.getAll(),
       builder: (context, snapshot) {
@@ -46,7 +46,7 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
           itemBuilder: (context, index) => Card(
             child: InkWell(
               onTap: () {
-                context.go('/problem-lists/${snapshot.data![index].name}');
+                context.go('/problem-lists/${snapshot.data![index].id}');
               },
               child: ListTile(
                 title: Text(snapshot.data![index].name),

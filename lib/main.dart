@@ -47,8 +47,8 @@ final GoRouter _router = GoRouter(
           builder: (context, state) => ProblemListsScreen(),
         ),
         GoRoute(
-          path: '/problem-lists/:name',
-          builder: (context, state) => ProblemListProblemsScreen(),
+          path: '/problem-lists/:id',
+          builder: (context, state) => ProblemListProblemsScreen(problemListId: int.parse(state.pathParameters['id']!)),
         ),
       ],
     ),
