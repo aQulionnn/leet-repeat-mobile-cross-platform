@@ -21,6 +21,8 @@ class DatabaseProvider {
       path,
       version: 1,
       onCreate: (db, version) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+
         await db.execute('''
           CREATE TABLE problem (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,8 +43,8 @@ class DatabaseProvider {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
-            FOREIGN KEY (problem_id) REFERENCES problem(id),
-            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id)
+            FOREIGN KEY (problem_id) REFERENCES problem(id) ON DELETE CASCADE,
+            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE
           )
         ''');
 
@@ -54,8 +56,8 @@ class DatabaseProvider {
             next_review_at TEXT NOT NULL,
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
-            FOREIGN KEY (problem_id) REFERENCES problem(id),
-            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id)
+            FOREIGN KEY (problem_id) REFERENCES problem(id) ON DELETE CASCADE,
+            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE
           )
         ''');
       },

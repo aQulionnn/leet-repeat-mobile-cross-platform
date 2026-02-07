@@ -43,19 +43,115 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
           itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) => Card(
-            child: InkWell(
-              onTap: () {
-                context.go('/problem-lists/${snapshot.data![index].id}');
+          itemBuilder: (context, index) {
+            final item = snapshot.data![index];
+
+            return Dismissible(
+              key: ValueKey(item.id),
+              direction: DismissDirection.endToStart,
+              confirmDismiss: (_) async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Text('Delete list?'),
+                    content: const Text('List and progress will be deleted.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dCtx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(dCtx, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+
+                return ok ?? false;
               },
-              child: ListTile(
-                title: Text(snapshot.data![index].name),
-                trailing: const Icon(Icons.chevron_right),
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                color: Colors.redAccent,
+                child: const Icon(Icons.delete, color: Colors.white),
               ),
-            ),
-          ),
+              onDismissed: (_) async {
+                await _problemListRepository.delete(item.id!);
+                if (!mounted) return;
+                setState(() {});
+              },
+              child: Card(
+                child: InkWell(
+                  onTap: () {
+                    context.go('/problem-lists/${snapshot.data![index].id}');
+                  },
+                  onLongPress: () => _openActionsSheet(item),
+                  child: ListTile(
+                    title: Text(snapshot.data![index].name),
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  void _openActionsSheet(ProblemList item) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Rename'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                _openRenameDialog(item);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openRenameDialog(ProblemList item) {
+    final controller = TextEditingController(text: item.name);
+
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: const Text('Rename list'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+
+              final nav = Navigator.of(dCtx);
+              await _problemListRepository.rename(item.id!, name);
+
+              if (!mounted) return;
+              nav.pop();
+              setState(() {});
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -65,7 +161,7 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
       onPressed: () {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Add Problem List'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -83,17 +179,23 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
                 ),
                 MaterialButton(
                   color: Theme.of(context).colorScheme.primary,
-                  onPressed: () {
+                  onPressed: () async {
                     if (_problemListName == null || _problemListName == '') {
                       return;
                     }
-                    _problemListRepository.add(
+
+                    final nav = Navigator.of(dialogContext);
+
+                    await _problemListRepository.add(
                       ProblemList(name: _problemListName!),
                     );
+
+                    if (!mounted) return;
+                    nav.pop();
+
                     setState(() {
                       _problemListName = null;
                     });
-                    Navigator.pop(context);
                   },
                   child: const Text(
                     'Add',

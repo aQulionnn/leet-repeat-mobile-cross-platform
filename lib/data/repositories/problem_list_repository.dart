@@ -15,12 +15,18 @@ class ProblemListRepository {
     return data.map((e) => ProblemList.fromJson(e)).toList();
   }
 
-  Future<int> delete(int id) async {
+  Future<int> rename(int id, String name) async {
     final db = await _dbProvider.database;
-    return db.delete(
+    return await db.update(
       'problem_list',
+      {'name': name},
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<int> delete(int id) async {
+    final db = await _dbProvider.database;
+    return db.delete('problem_list', where: 'id = ?', whereArgs: [id]);
   }
 }
