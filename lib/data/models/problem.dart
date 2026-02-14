@@ -1,3 +1,5 @@
+import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
+
 class Problem {
   final int? id;
   final String question;
@@ -17,5 +19,3 @@ class Problem {
     difficulty: Difficulty.values[json['difficulty']],
   );
 }
-
-enum Difficulty { easy, medium, hard }
