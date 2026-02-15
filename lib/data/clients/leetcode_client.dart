@@ -1,5 +1,5 @@
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/leetcode_question_details_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_problem_by_question_id_response.dart';
 
 class LeetCodeClient {
   late final HttpLink _link;
@@ -10,19 +10,21 @@ class LeetCodeClient {
     _client = GraphQLClient(link: _link, cache: GraphQLCache());
   }
 
-  Future<LeetCodeQuestionDetailsResponse?> getQuestionDetails(String titleSlug) async {
+  Future<GetProblemByQuestionIdResponse?> getProblemByQuestionId(int id) async {
     final response = await _client.query(
       QueryOptions(
         document: gql(r'''
-          query questionDetail($titleSlug: String!) {
-            question(titleSlug: $titleSlug) {
-              questionId
-              title
-              difficulty
+          query ($skip: Int!) {
+            questionList(categorySlug: "", limit: 1, skip: $skip, filters: {}) {
+              questions: data {
+                questionFrontendId
+                title
+                difficulty
+              }
             }
-          } 
+          }
         '''),
-        variables: {'titleSlug': titleSlug},
+        variables: {"skip": id - 1},
         fetchPolicy: FetchPolicy.noCache,
       ),
     );
@@ -31,9 +33,12 @@ class LeetCodeClient {
       throw response.exception!;
     }
 
-    final json = response.data?['question'];
-    if (json == null) return null;
+    final questions =
+        response.data?['questionList']['questions'] as List<dynamic>;
+    if (questions.isEmpty) return null;
 
-    return LeetCodeQuestionDetailsResponse.fromJson(json);
+    return GetProblemByQuestionIdResponse.fromJson(
+      questions.first as Map<String, dynamic>,
+    );
   }
 }

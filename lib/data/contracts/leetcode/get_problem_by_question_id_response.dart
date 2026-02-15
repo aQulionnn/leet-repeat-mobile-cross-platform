@@ -1,17 +1,17 @@
 import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
 
-class LeetCodeQuestionDetailsResponse {
-  final String title;
+class GetProblemByQuestionIdResponse {
+  final String question;
   final Difficulty difficulty;
 
-  LeetCodeQuestionDetailsResponse({
-    required this.title,
+  GetProblemByQuestionIdResponse({
+    required this.question,
     required this.difficulty,
   });
 
-  factory LeetCodeQuestionDetailsResponse.fromJson(Map<String, dynamic> json) {
-    return LeetCodeQuestionDetailsResponse(
-      title: '${json['questionId']}. ${json['title']}',
+  factory GetProblemByQuestionIdResponse.fromJson(Map<String, dynamic> json) {
+    return GetProblemByQuestionIdResponse(
+      question: '${json['questionFrontendId']}. ${json['title']}',
       difficulty: _mapDifficulty(json['difficulty']),
     );
   }
