@@ -26,6 +26,7 @@ class DatabaseProvider {
         await db.execute('''
           CREATE TABLE problem (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question_id INTEGER NOT NULL,
             question TEXT NOT NULL,
             difficulty INTEGER NOT NULL
           )
@@ -53,7 +54,8 @@ class DatabaseProvider {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             perceived_difficulty INTEGER NOT NULL,
             last_solved_at TEXT NOT NULL,
-            next_review_at TEXT NOT NULL,
+            next_review_at TEXT,
+            status INTEGER NOT NULL,
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
             FOREIGN KEY (problem_id) REFERENCES problem(id) ON DELETE CASCADE,

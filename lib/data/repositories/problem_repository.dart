@@ -26,6 +26,17 @@ class ProblemRepository {
     return data.isEmpty ? null : Problem.fromJson(data.first);
   }
 
+  Future<Problem?> getByQuestionId(int questionId) async {
+    final db = await _dbProvider.database;
+    final data = await db.query(
+      'problem',
+      where: 'question_id = ?',
+      whereArgs: [questionId],
+      limit: 1,
+    );
+    return data.isEmpty ? null : Problem.fromJson(data.first);
+  }
+
   Future<int> update(Problem problem) async {
     final db = await _dbProvider.database;
     return db.update(
@@ -38,10 +49,6 @@ class ProblemRepository {
 
   Future<int> delete(int id) async {
     final db = await _dbProvider.database;
-    return db.delete(
-      'problem',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('problem', where: 'id = ?', whereArgs: [id]);
   }
 }
