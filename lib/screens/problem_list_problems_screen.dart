@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/clients/leetcode_client.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
 
 class ProblemListProblemsScreen extends StatefulWidget {
   final int problemListId;
@@ -15,11 +21,14 @@ class ProblemListProblemsScreen extends StatefulWidget {
 class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
   final ProblemListProblemRepository _problemListProblemRepository =
       ProblemListProblemRepository();
-
   final ProblemRepository _problemRepository = ProblemRepository();
+  final ProgressRepository _progressRepository = ProgressRepository();
 
-  String? _problemListProblemQuestion;
-  Difficulty? _problemListProblemDifficulty;
+  final LeetCodeClient _leetCodeClient = LeetCodeClient();
+
+  int? _questionId;
+  PerceivedDifficulty? _perceivedDifficulty;
+  int? _problemId;
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +61,34 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
           itemCount: snapshot.data!.length,
           itemBuilder: (context, index) => ListTile(
             title: Text(snapshot.data![index].question),
-            trailing: Text(snapshot.data![index].difficulty.name),
+            trailing: Text(
+              snapshot.data![index].difficulty.name,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _difficultyColor(
+                  context,
+                  snapshot.data![index].difficulty,
+                ),
+              ),
+            ),
           ),
         );
       },
     );
+  }
+
+  Color _difficultyColor(BuildContext context, Difficulty d) {
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
+    switch (d) {
+      case Difficulty.easy:
+        return isLightMode ? Colors.green : Colors.greenAccent;
+      case Difficulty.medium:
+        return isLightMode ? Colors.yellow : Colors.yellowAccent;
+      case Difficulty.hard:
+        return isLightMode ? Colors.red : Colors.redAccent;
+    }
   }
 
   Widget _addProblemListProblem() {
@@ -65,75 +97,113 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
       onPressed: () {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Add Problem'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  keyboardType: TextInputType.number,
                   onChanged: (value) {
                     setState(() {
-                      _problemListProblemQuestion = value;
+                      _questionId = int.tryParse(value);
                     });
                   },
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Question...',
+                    hintText: 'Question Id',
                   ),
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<Difficulty>(
-                  value: _problemListProblemDifficulty,
-                  items: Difficulty.values
+                const SizedBox(height: 16),
+                DropdownButtonFormField<PerceivedDifficulty>(
+                  initialValue: _perceivedDifficulty,
+                  items: PerceivedDifficulty.values
                       .map(
-                        (d) => DropdownMenuItem(value: d, child: Text(d.name)),
+                        (d) => DropdownMenuItem(value: d, child: Text(d.label)),
                       )
                       .toList(),
                   onChanged: (value) {
                     setState(() {
-                      _problemListProblemDifficulty = value;
+                      _perceivedDifficulty = value;
                     });
                   },
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Difficulty',
+                    hintText: 'Perceived Difficulty',
                   ),
                 ),
                 const SizedBox(height: 12),
                 MaterialButton(
                   color: Theme.of(context).colorScheme.primary,
                   onPressed: () async {
-                    if (_problemListProblemQuestion == null ||
-                        _problemListProblemQuestion!.trim().isEmpty ||
-                        _problemListProblemDifficulty == null) {
+                    final questionId = _questionId;
+                    final perceivedDifficulty = _perceivedDifficulty;
+
+                    if (questionId == null ||
+                        questionId <= 0 ||
+                        perceivedDifficulty == null) {
                       return;
                     }
 
-                    final problemId = await _problemRepository.add(
-                      Problem(
-                        question: _problemListProblemQuestion!.trim(),
-                        difficulty: _problemListProblemDifficulty!,
+                    final nav = Navigator.of(dialogContext);
+
+                    final problem = await _problemRepository.getByQuestionId(
+                      questionId,
+                    );
+
+                    if (problem == null) {
+                      final response = await _leetCodeClient
+                          .getProblemByQuestionId(questionId);
+                      if (response == null) return;
+
+                      _problemId = await _problemRepository.add(
+                        Problem(
+                          questionId: questionId,
+                          question: response.question,
+                          difficulty: response.difficulty,
+                        ),
+                      );
+                    }
+
+                    final problemId = _problemId;
+                    if (problemId == null) return;
+
+                    await _problemListProblemRepository.add(
+                      problemId,
+                      widget.problemListId,
+                    );
+
+                    final now = DateTime.now().toUtc();
+                    final nextReviewDate = _nextReview(
+                      perceivedDifficulty,
+                      now,
+                    );
+
+                    final status =
+                        perceivedDifficulty == PerceivedDifficulty.veryEasy
+                        ? Status.mastered
+                        : Status.practicing;
+
+                    await _progressRepository.upsert(
+                      Progress(
+                        perceivedDifficulty: perceivedDifficulty,
+                        lastSolvedAt: now.toIso8601String(),
+                        nextReviewAt: nextReviewDate?.toIso8601String(),
+                        status: status,
+                        problemId: problemId,
+                        problemListId: widget.problemListId,
                       ),
                     );
 
-                    await _problemListProblemRepository.add(
-                      problemId,
-                      widget.problemListId,
-                    );
+                    _questionId = null;
+                    _perceivedDifficulty = null;
+                    _problemId = null;
 
-                    await _problemListProblemRepository.add(
-                      problemId,
-                      widget.problemListId,
-                    );
-
-                    _problemListProblemQuestion = null;
-                    _problemListProblemDifficulty = null;
+                    if (!mounted) return;
+                    nav.pop();
 
                     setState(() {});
-                    
-                    Navigator.pop(context);
                   },
-
                   child: const Text(
                     'Add',
                     style: TextStyle(color: Colors.white),
@@ -147,4 +217,34 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
       child: const Icon(Icons.add),
     );
   }
+}
+
+DateTime? _nextReview(PerceivedDifficulty d, DateTime dateTime) {
+  switch (d) {
+    case PerceivedDifficulty.veryEasy:
+      return null;
+    case PerceivedDifficulty.easy:
+      return _addMonths(dateTime, 1);
+    case PerceivedDifficulty.medium:
+      return dateTime.add(const Duration(days: 14));
+    case PerceivedDifficulty.hard:
+      return dateTime.add(const Duration(days: 7));
+    case PerceivedDifficulty.veryHard:
+      return dateTime.add(const Duration(days: 3));
+    case PerceivedDifficulty.extremelyHard:
+      return dateTime.add(const Duration(days: 1));
+  }
+}
+
+DateTime _addMonths(DateTime date, int months) {
+  return DateTime.utc(
+    date.year,
+    date.month + months,
+    date.day,
+    date.hour,
+    date.minute,
+    date.second,
+    date.millisecond,
+    date.microsecond,
+  );
 }
