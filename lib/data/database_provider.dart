@@ -45,7 +45,8 @@ class DatabaseProvider {
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
             FOREIGN KEY (problem_id) REFERENCES problem(id) ON DELETE CASCADE,
-            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE
+            FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE,
+            UNIQUE(problem_id, problem_list_id)
           )
         ''');
 

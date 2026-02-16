@@ -1,15 +1,18 @@
 import 'package:leet_repeat_mobile_cross_platform/data/database_provider.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/problem_list_problem.dart';
+import 'package:sqflite/sqlite_api.dart';
 
 class ProblemListProblemRepository {
   final _dbProvider = DatabaseProvider.instance;
 
-  Future<int> add(int problemId, int problemListId) async {
+  Future<int> add(ProblemListProblem problemlListProblem) async {
     final db = await _dbProvider.database;
-    return db.insert('problem_list_problem', {
-      'problem_id': problemId,
-      'problem_list_id': problemListId,
-    });
+    return db.insert(
+      'problem_list_problem',
+      problemlListProblem.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<int> remove(int problemId, int problemListId) async {
@@ -30,7 +33,7 @@ class ProblemListProblemRepository {
         INNER JOIN problem_list_problem plp ON p.id = plp.problem_id
         WHERE plp.problem_list_id = ? 
       ''',
-      [problemListId]
+      [problemListId],
     );
 
     return data.map(Problem.fromJson).toList();

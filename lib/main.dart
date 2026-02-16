@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'LeetRepeat',
             theme: theme.themeData,
+            scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
             routerConfig: _router,
           );
         },

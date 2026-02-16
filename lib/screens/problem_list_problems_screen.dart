@@ -4,6 +4,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/problem_list_problem.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
@@ -146,6 +147,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                     }
 
                     final nav = Navigator.of(dialogContext);
+                    final messenger = ScaffoldMessenger.of(dialogContext);
 
                     final problem = await _problemRepository.getByQuestionId(
                       questionId,
@@ -165,13 +167,25 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                       );
                     }
 
-                    final problemId = _problemId;
+                    final problemId = _problemId ?? problem?.id;
                     if (problemId == null) return;
 
-                    await _problemListProblemRepository.add(
-                      problemId,
-                      widget.problemListId,
-                    );
+                    final problemListProblemId = await _problemListProblemRepository
+                        .add(
+                          ProblemListProblem(
+                            problemId: problemId,
+                            problemListId: widget.problemListId,
+                          ),
+                        );
+
+                    if (!mounted) return;
+
+                    if (problemListProblemId == 0) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Already exists')),
+                      );
+                      return;
+                    }
 
                     final now = DateTime.now().toUtc();
                     final nextReviewDate = _nextReview(
