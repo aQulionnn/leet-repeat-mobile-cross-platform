@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/due_for_review_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/home_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
@@ -49,7 +50,13 @@ final GoRouter _router = GoRouter(
         ),
         GoRoute(
           path: '/problem-lists/:id',
-          builder: (context, state) => ProblemListProblemsScreen(problemListId: int.parse(state.pathParameters['id']!)),
+          builder: (context, state) => ProblemListProblemsScreen(
+            problemListId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: '/due-for-review',
+          builder: (context, state) => DueForReviewScreen(),
         ),
       ],
     ),

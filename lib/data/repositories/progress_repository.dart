@@ -1,4 +1,5 @@
 import 'package:leet_repeat_mobile_cross_platform/data/database_provider.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
 
 class ProgressRepository {
@@ -38,8 +39,8 @@ class ProgressRepository {
     final db = await _dbProvider.database;
     final data = await db.query(
       'progress',
-      where: 'next_review_at <= ?',
-      whereArgs: [nowIso],
+      where: 'next_review_at <= ? AND status = ?',
+      whereArgs: [nowIso, Status.practicing.index],
     );
 
     return data.map(Progress.fromJson).toList();

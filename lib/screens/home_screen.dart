@@ -15,17 +15,25 @@ class HomeScreen extends StatelessWidget {
           body: Row(
             children: [
               SafeArea(
-                child: NavigationRail(
+                child: HomeScreenHomeScreen(
                   extended: constraints.maxWidth >= 600,
                   destinations: [
                     NavigationRailDestination(
                       icon: Icon(Icons.list),
                       label: Text('Problem Lists'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.today),
+                      label: Text('Due for review'),
+                    ),
                   ],
                   selectedIndex: 0,
                   onDestinationSelected: (value) {
-                    if (value == 0) context.go('/problem-lists');
+                    if (value == 0) {
+                      context.go('/problem-lists');
+                    } else if (value == 1) {
+                      context.go('/due-for-review');
+                    }
                   },
                   trailing: Expanded(
                     child: Align(
@@ -34,7 +42,7 @@ class HomeScreen extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 16.0, left: 8.0),
                         child: IconButton(
                           onPressed: () {
-                            context.read<ThemeProvider>().toggleTheme(); 
+                            context.read<ThemeProvider>().toggleTheme();
                           },
                           icon: Icon(Icons.brightness_6),
                         ),
