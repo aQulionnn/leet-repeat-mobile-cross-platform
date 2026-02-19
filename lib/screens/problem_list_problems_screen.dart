@@ -187,10 +187,10 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                       return;
                     }
 
-                    final now = DateTime.now().toUtc();
-                    final nextReviewDate = _nextReview(
+                    final nowUtc = DateTime.now().toUtc();
+                    final nextReviewDateUtc = _nextReview(
                       perceivedDifficulty,
-                      now,
+                      nowUtc,
                     );
 
                     final status =
@@ -201,8 +201,8 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                     await _progressRepository.upsert(
                       Progress(
                         perceivedDifficulty: perceivedDifficulty,
-                        lastSolvedAt: now.toIso8601String(),
-                        nextReviewAt: nextReviewDate?.toIso8601String(),
+                        lastSolvedAtUtc: nowUtc.toIso8601String(),
+                        nextReviewAtUtc: nextReviewDateUtc?.toIso8601String(),
                         status: status,
                         problemId: problemId,
                         problemListId: widget.problemListId,

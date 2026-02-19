@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/dtos/due_for_review_dto.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
-import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:intl/intl.dart';
 
 class DueForReviewScreen extends StatefulWidget {
   const DueForReviewScreen({super.key});
@@ -15,14 +16,19 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [Center(child: _dueList())]);
+    return Stack(children: [Center(child: _dueForReviewList())]);
   }
 
-  Widget _dueList() {
-    final nowIso = DateTime.now().toUtc().toIso8601String();
+  Widget _dueForReviewList() {
+    final nowUtc = DateTime.now().toUtc();
+    final nowIsoUtc = DateTime.utc(
+      nowUtc.year,
+      nowUtc.month,
+      nowUtc.day,
+    ).add(const Duration(hours: 24)).toIso8601String();
 
-    return FutureBuilder<List<Progress>>(
-      future: _progressRepository.getDueForReview(nowIso),
+    return FutureBuilder<List<DueForReviewDto>>(
+      future: _progressRepository.getDueForReview(nowIsoUtc),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -38,15 +44,19 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
           itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) => ListTile(
-            title: Text(snapshot.data![index].problemId.toString()),
-            trailing: Text(
-              snapshot.data![index].perceivedDifficulty.label,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ),
+          itemBuilder: (context, index) {
+            final item = snapshot.data![index];
+
+            final date = DateTime.parse(item.progress.nextReviewAtUtc!);
+            final formatted = DateFormat('dd/MM/yyyy').format(date.toUtc());
+
+            return ListTile(
+              title: Text(item.problem.question),
+              subtitle: Text('${item.problemList.name} \n$formatted \n${item.progress.perceivedDifficulty.label}')
+            );
+          },
         );
       },
     );

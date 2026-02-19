@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
           body: Row(
             children: [
               SafeArea(
-                child: HomeScreenHomeScreen(
+                child: NavigationRail(
                   extended: constraints.maxWidth >= 600,
                   destinations: [
                     NavigationRailDestination(

@@ -4,8 +4,8 @@ import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 class Progress {
   int? id;
   PerceivedDifficulty perceivedDifficulty;
-  String lastSolvedAt;
-  String? nextReviewAt;
+  String lastSolvedAtUtc;
+  String? nextReviewAtUtc;
   Status status;
   int problemId;
   int problemListId;
@@ -13,8 +13,8 @@ class Progress {
   Progress({
     this.id,
     required this.perceivedDifficulty,
-    required this.lastSolvedAt,
-    required this.nextReviewAt,
+    required this.lastSolvedAtUtc,
+    required this.nextReviewAtUtc,
     required this.status,
     required this.problemId,
     required this.problemListId,
@@ -23,8 +23,8 @@ class Progress {
   Map<String, dynamic> toJson() => {
     'id': id,
     'perceived_difficulty': perceivedDifficulty.index,
-    'last_solved_at': lastSolvedAt,
-    'next_review_at': nextReviewAt,
+    'last_solved_at_utc': lastSolvedAtUtc,
+    'next_review_at_utc': nextReviewAtUtc,
     'status': status.index,
     'problem_id': problemId,
     'problem_list_id': problemListId,
@@ -34,9 +34,9 @@ class Progress {
     id: json['id'],
     perceivedDifficulty:
         PerceivedDifficulty.values[json['perceived_difficulty']],
-    lastSolvedAt: json['last_solved_at'],
-    nextReviewAt: json['next_review_at'],
-    status: json['status'],
+    lastSolvedAtUtc: json['last_solved_at_utc'],
+    nextReviewAtUtc: json['next_review_at_utc'],
+    status: Status.values[json['status']],
     problemId: json['problem_id'],
     problemListId: json['problem_list_id'],
   );
