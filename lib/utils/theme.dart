@@ -5,14 +5,24 @@ ThemeData lightMode = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.yellowAccent,
     brightness: Brightness.light
-  )
+  ),
+  dividerTheme: DividerThemeData(
+    color: Colors.black.withValues(alpha: 0.5),
+    thickness: 1,
+    space: 0,
+  ), 
 );
 
 ThemeData darkMode = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.deepPurpleAccent,
     brightness: Brightness.dark
-  )
+  ),
+  dividerTheme: DividerThemeData(
+    color: Colors.white.withValues(alpha: 0.5),
+    thickness: 1,
+    space: 0,
+  ),
 );
 
 class ThemeProvider extends ChangeNotifier {

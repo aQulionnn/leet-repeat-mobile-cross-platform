@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/clients/leetcode_client.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
@@ -60,20 +61,53 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
           itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) => ListTile(
-            title: Text(snapshot.data![index].question),
-            trailing: Text(
-              snapshot.data![index].difficulty.name,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _difficultyColor(
-                  context,
-                  snapshot.data![index].difficulty,
+          itemBuilder: (context, index) {
+            final p = snapshot.data![index];
+            final isLast = index == snapshot.data!.length - 1;
+
+            return Column(
+              children: [
+                InkWell(
+                  onTap: () => context.go(
+                    '/problem-lists/${widget.problemListId}/problems/${p.id}',
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.question,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              p.difficulty.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: _difficultyColor(context, p.difficulty),
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.chevron_right, size: 18),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
+                if (!isLast) const Divider(height: 1),
+              ],
+            );
+          },
         );
       },
     );
@@ -170,8 +204,8 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                     final problemId = _problemId ?? problem?.id;
                     if (problemId == null) return;
 
-                    final problemListProblemId = await _problemListProblemRepository
-                        .add(
+                    final problemListProblemId =
+                        await _problemListProblemRepository.add(
                           ProblemListProblem(
                             problemId: problemId,
                             problemListId: widget.problemListId,
