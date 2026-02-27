@@ -6,7 +6,14 @@ class LeetCodeClient {
   late final GraphQLClient _client;
 
   LeetCodeClient() {
-    _link = HttpLink('https://leetcode.com/graphql');
+    _link = HttpLink(
+      'https://leetcode.com/graphql',
+      defaultHeaders: {
+        'Content-Type': 'application/json',
+        'Referer': 'https://leetcode.com',
+        'Origin': 'https://leetcode.com',
+      },
+    );
     _client = GraphQLClient(link: _link, cache: GraphQLCache());
   }
 
