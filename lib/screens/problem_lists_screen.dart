@@ -25,24 +25,43 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
   }
 
   Widget _problemLists() {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     return FutureBuilder(
       future: _problemListRepository.getAll(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No lists yet!'));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.list_alt_outlined, size: 48, color: cs.outline),
+                const SizedBox(height: 12),
+                Text(
+                  'No lists yet',
+                  style: tt.bodyLarge?.copyWith(color: cs.outline),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap + to create your first list',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ],
+            ),
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
           itemCount: snapshot.data!.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final item = snapshot.data![index];
 
@@ -61,20 +80,23 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
                         child: const Text('Cancel'),
                       ),
                       TextButton(
+                        style: TextButton.styleFrom(foregroundColor: cs.error),
                         onPressed: () => Navigator.pop(dCtx, true),
                         child: const Text('Delete'),
                       ),
                     ],
                   ),
                 );
-
                 return ok ?? false;
               },
               background: Container(
                 alignment: Alignment.centerRight,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                color: Colors.redAccent,
-                child: const Icon(Icons.delete, color: Colors.white),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: cs.errorContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
               ),
               onDismissed: (_) async {
                 await _problemListRepository.delete(item.id!);
@@ -82,14 +104,55 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
                 setState(() {});
               },
               child: Card(
+                elevation: 0,
+                color: cs.primaryContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: InkWell(
-                  onTap: () {
-                    context.go('/problem-lists/${snapshot.data![index].id}');
-                  },
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => context.go('/problem-lists/${item.id}'),
                   onLongPress: () => _openActionsSheet(item),
-                  child: ListTile(
-                    title: Text(snapshot.data![index].name),
-                    trailing: const Icon(Icons.chevron_right),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.folder_outlined,
+                          color: cs.onPrimaryContainer,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.name,
+                                style: tt.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onPrimaryContainer,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Hold to rename • Swipe to delete',
+                                style: tt.labelSmall?.copyWith(
+                                  color: cs.onPrimaryContainer.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: cs.onPrimaryContainer.withValues(alpha: 0.6),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -101,20 +164,24 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
   }
 
   void _openActionsSheet(ProblemList item) {
+    final cs = Theme.of(context).colorScheme;
+
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetCtx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Rename'),
-              onTap: () {
-                Navigator.pop(sheetCtx);
-                _openRenameDialog(item);
-              },
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            leading: Icon(Icons.edit_outlined, color: cs.primary),
+            title: const Text('Rename'),
+            onTap: () {
+              Navigator.pop(sheetCtx);
+              _openRenameDialog(item);
+            },
+          ),
         ),
       ),
     );
@@ -136,14 +203,12 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
             onPressed: () => Navigator.pop(dCtx),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () async {
               final name = controller.text.trim();
               if (name.isEmpty) return;
-
               final nav = Navigator.of(dCtx);
               await _problemListRepository.rename(item.id!, name);
-
               if (!mounted) return;
               nav.pop();
               setState(() {});
@@ -156,57 +221,50 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
   }
 
   Widget _addProblemListButton() {
+    final cs = Theme.of(context).colorScheme;
+
     return FloatingActionButton(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: cs.primary,
       onPressed: () {
         showDialog(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: const Text('Add Problem List'),
+            title: const Text('New Problem List'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _problemListName = value;
-                    });
-                  },
+                  onChanged: (value) =>
+                      setState(() => _problemListName = value),
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Name...',
+                    hintText: 'List name...',
                   ),
                 ),
-                MaterialButton(
-                  color: Theme.of(context).colorScheme.primary,
-                  onPressed: () async {
-                    if (_problemListName == null || _problemListName == '') {
-                      return;
-                    }
-
-                    final nav = Navigator.of(dialogContext);
-
-                    await _problemListRepository.add(
-                      ProblemList(name: _problemListName!),
-                    );
-
-                    if (!mounted) return;
-                    nav.pop();
-
-                    setState(() {
-                      _problemListName = null;
-                    });
-                  },
-                  child: const Text(
-                    'Add',
-                    style: TextStyle(color: Colors.white),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () async {
+                      if (_problemListName == null ||
+                          _problemListName!.isEmpty) {
+                        return;
+                      }
+                      final nav = Navigator.of(dialogContext);
+                      await _problemListRepository.add(
+                        ProblemList(name: _problemListName!),
+                      );
+                      if (!mounted) return;
+                      nav.pop();
+                      setState(() => _problemListName = null);
+                    },
+                    child: const Text('Create'),
                   ),
                 ),
               ],
             ),
           ),
         );
-
         setState(() {});
       },
       child: const Icon(Icons.add),

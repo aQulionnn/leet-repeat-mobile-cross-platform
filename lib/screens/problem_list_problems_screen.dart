@@ -43,69 +43,87 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
   }
 
   Widget _problemListProblems() {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     return FutureBuilder(
       future: _problemListProblemRepository.getByList(widget.problemListId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No problems yet!'));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.inbox_outlined, size: 48, color: cs.outline),
+                const SizedBox(height: 12),
+                Text(
+                  'No problems yet',
+                  style: tt.bodyLarge?.copyWith(color: cs.outline),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap + to add your first problem',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ],
+            ),
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final p = snapshot.data![index];
-            final isLast = index == snapshot.data!.length - 1;
+        final problems = snapshot.data!;
 
-            return Column(
-              children: [
-                InkWell(
-                  onTap: () => context.go(
-                    '/problem-lists/${widget.problemListId}/problems/${p.id}',
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 8,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.question,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
+          itemCount: problems.length,
+          separatorBuilder: (_, _) =>
+              const Divider(height: 1, indent: 16, endIndent: 16),
+          itemBuilder: (context, index) {
+            final p = problems[index];
+            final (diffLabel, diffColor) = _difficultyColor(context, p.difficulty);
+
+            return ListTile(
+              onTap: () => context.go(
+                '/problem-lists/${widget.problemListId}/problems/${p.id}',
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 0,
+              ),
+              title: Text(
+                p.question,
+                style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: diffColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        diffLabel,
+                        style: tt.labelSmall?.copyWith(
+                          color: diffColor,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              p.difficulty.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: _difficultyColor(context, p.difficulty),
-                              ),
-                            ),
-                            const Spacer(),
-                            const Icon(Icons.chevron_right, size: 18),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                if (!isLast) const Divider(height: 1),
-              ],
+              ),
+              trailing: Icon(Icons.chevron_right, color: cs.outline, size: 20),
             );
           },
         );
@@ -113,16 +131,16 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
     );
   }
 
-  Color _difficultyColor(BuildContext context, Difficulty d) {
+  (String, Color) _difficultyColor(BuildContext context, Difficulty d) {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
     switch (d) {
       case Difficulty.easy:
-        return isLightMode ? Colors.green : Colors.greenAccent;
+        return ('Easy', isLightMode ? Colors.green : Colors.greenAccent);
       case Difficulty.medium:
-        return isLightMode ? Colors.yellow : Colors.yellowAccent;
+        return ('Medium', isLightMode ? Colors.orange : Colors.orangeAccent);
       case Difficulty.hard:
-        return isLightMode ? Colors.red : Colors.redAccent;
+        return ('Hard', isLightMode ? Colors.red : Colors.redAccent);
     }
   }
 

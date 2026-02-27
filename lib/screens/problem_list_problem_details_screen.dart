@@ -197,7 +197,7 @@ class _ProblemListProblemDetailsScreenState
   String _formatDate(String utcString) {
     try {
       final dt = DateTime.parse(utcString).toLocal();
-      return DateFormat('dd MMM yyyy, HH:mm').format(dt);
+      return DateFormat('dd MMM yyyy').format(dt);
     } catch (_) {
       return utcString;
     }
@@ -206,11 +206,11 @@ class _ProblemListProblemDetailsScreenState
   Color _statusColor(Status status, ColorScheme cs) {
     switch (status) {
       case Status.mastered:
-        return Colors.green;
+        return Colors.yellowAccent;
       case Status.practicing:
-        return cs.primary;
+        return Colors.pinkAccent;
       case Status.frozen:
-        return cs.outline;
+        return Colors.lightBlueAccent;
     }
   }
 }
@@ -222,11 +222,7 @@ class _DifficultyChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (difficulty) {
-      Difficulty.easy => ('Easy', Colors.green),
-      Difficulty.medium => ('Medium', Colors.orange),
-      Difficulty.hard => ('Hard', Colors.red),
-    };
+    final (label, color) = _difficultyColor(context, difficulty);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -245,6 +241,19 @@ class _DifficultyChip extends StatelessWidget {
     );
   }
 }
+
+  (String, Color) _difficultyColor(BuildContext context, Difficulty d) {
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
+    switch (d) {
+      case Difficulty.easy:
+        return ('Easy', isLightMode ? Colors.green : Colors.greenAccent);
+      case Difficulty.medium:
+        return ('Medium', isLightMode ? Colors.orange : Colors.orangeAccent);
+      case Difficulty.hard:
+        return ('Hard', isLightMode ? Colors.red : Colors.redAccent);
+    }
+  }
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;

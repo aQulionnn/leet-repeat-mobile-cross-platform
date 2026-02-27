@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/dtos/due_for_review_dto.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
 import 'package:intl/intl.dart';
 
@@ -27,7 +28,7 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
       nowUtc.year,
       nowUtc.month,
       nowUtc.day,
-    ).add(const Duration(hours: 24)).toIso8601String();
+    ).add(const Duration(hours: 240)).toIso8601String();
   }
 
   void _refresh() {
@@ -42,53 +43,204 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
   }
 
   Widget _dueForReviewList() {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     return FutureBuilder<List<DueForReviewDto>>(
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
         final items = snapshot.data ?? [];
         if (items.isEmpty) {
-          return const Center(child: Text('Nothing due yet!'));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.done_all_outlined, size: 48, color: cs.outline),
+                const SizedBox(height: 12),
+                Text(
+                  'All caught up!',
+                  style: tt.bodyLarge?.copyWith(color: cs.outline),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Nothing due for review',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ],
+            ),
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
-          itemCount: snapshot.data!.length,
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(10, 24, 10, 24),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 4),
           itemBuilder: (context, index) {
-            final item = snapshot.data![index];
+            final item = items[index];
             final date = DateTime.parse(item.progress.nextReviewAtUtc!);
-            final formatted = DateFormat('dd/MM/yyyy').format(date.toUtc());
+            final formatted = DateFormat('dd MMM yyyy').format(date.toLocal());
+            final isOverdue = date.isBefore(DateTime.now());
+            final isFrozen = item.progress.status == Status.frozen;
 
-            return ListTile(
-              title: Text(item.problem.question),
-              subtitle: Text(
-                '${item.problemList.name} \n$formatted \n${item.progress.perceivedDifficulty.label}',
+            return Dismissible(
+              key: ValueKey(item.progress.id),
+              confirmDismiss: (direction) async {
+                if (direction == DismissDirection.startToEnd) {
+                  await _solve(item);
+                } else {
+                  await _freeze(item);
+                }
+                return false;
+              },
+              background: Container(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Solve',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              trailing: PopupMenuButton<_DueAction>(
-                onSelected: (a) async {
-                  if (a == _DueAction.solve) {
-                    await _solve(item);
-                    return;
-                  }
-                  if (a == _DueAction.freeze) {
-                    await _freeze(item);
-                    return;
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: _DueAction.solve, child: Text('Solve')),
-                  PopupMenuItem(
-                    value: _DueAction.freeze,
-                    child: Text('Freeze'),
+              secondaryBackground: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Freeze',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.ac_unit, color: Colors.white),
+                  ],
+                ),
+              ),
+              child: Card(
+                elevation: 0,
+                color: cs.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.problem.question,
+                              style: tt.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cs.secondaryContainer,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    item.problemList.name,
+                                    style: tt.labelSmall?.copyWith(
+                                      color: cs.onSecondaryContainer,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isFrozen
+                                        ? cs.outline.withValues(alpha: 0.12)
+                                        : isOverdue
+                                        ? cs.errorContainer
+                                        : cs.primaryContainer,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isFrozen
+                                            ? Icons.ac_unit
+                                            : Icons.schedule_outlined,
+                                        size: 11,
+                                        color: isFrozen
+                                            ? cs.outline
+                                            : isOverdue
+                                            ? cs.onErrorContainer
+                                            : cs.onPrimaryContainer,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        formatted,
+                                        style: tt.labelSmall?.copyWith(
+                                          color: isFrozen
+                                              ? cs.outline
+                                              : isOverdue
+                                              ? cs.onErrorContainer
+                                              : cs.onPrimaryContainer,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              item.progress.perceivedDifficulty.label,
+                              style: tt.labelSmall?.copyWith(color: cs.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -217,8 +369,6 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
     _refresh();
   }
 }
-
-enum _DueAction { solve, freeze }
 
 DateTime? _nextReview(PerceivedDifficulty d, DateTime dateTime) {
   switch (d) {
