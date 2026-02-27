@@ -294,6 +294,7 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
 
     item.progress.perceivedDifficulty = selected;
     item.progress.nextReviewAtUtc = next?.toIso8601String();
+    item.progress.status = next == null ? Status.mastered : Status.practicing;
 
     await _progressRepository.upsert(item.progress);
     if (!mounted) return;
@@ -355,6 +356,7 @@ class _DueForReviewScreenState extends State<DueForReviewScreen> {
     final frozenUntil = nowUtc.add(Duration(days: selectedDays));
 
     item.progress.nextReviewAtUtc = frozenUntil.toIso8601String();
+    item.progress.status = Status.frozen;
 
     await _progressRepository.upsert(item.progress);
     if (!mounted) return;
