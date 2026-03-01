@@ -54,8 +54,8 @@ class DatabaseProvider {
           CREATE TABLE progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             perceived_difficulty INTEGER NOT NULL,
-            last_solved_at TEXT NOT NULL,
-            next_review_at TEXT,
+            last_solved_at_utc TEXT NOT NULL,
+            next_review_at_utc TEXT,
             status INTEGER NOT NULL,
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
