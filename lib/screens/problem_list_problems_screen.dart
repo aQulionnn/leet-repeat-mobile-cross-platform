@@ -88,7 +88,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
             final (diffLabel, diffColor) = _difficultyColor(context, p.difficulty);
 
             return ListTile(
-              onTap: () => context.go(
+              onTap: () => context.push(
                 '/problem-lists/${widget.problemListId}/problems/${p.id}',
               ),
               contentPadding: const EdgeInsets.symmetric(

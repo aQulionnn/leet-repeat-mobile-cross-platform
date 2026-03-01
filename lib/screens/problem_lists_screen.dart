@@ -111,7 +111,7 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () => context.go('/problem-lists/${item.id}'),
+                  onTap: () => context.push('/problem-lists/${item.id}'),
                   onLongPress: () => _openActionsSheet(item),
                   child: Padding(
                     padding: const EdgeInsets.all(16),

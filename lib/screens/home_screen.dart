@@ -9,6 +9,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.toString();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
@@ -27,12 +29,12 @@ class HomeScreen extends StatelessWidget {
                       label: Text('Due for review'),
                     ),
                   ],
-                  selectedIndex: 0,
+                  selectedIndex: _selectedIndex(location),
                   onDestinationSelected: (value) {
                     if (value == 0) {
-                      context.go('/problem-lists');
+                      context.push('/problem-lists');
                     } else if (value == 1) {
-                      context.go('/due-for-review');
+                      context.push('/due-for-review');
                     }
                   },
                   trailing: Expanded(
@@ -63,4 +65,10 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
+
+int _selectedIndex(String location) {
+  if (location.startsWith('/problem-lists')) return 0;
+  if (location.startsWith('/due-for-review')) return 1;
+  return 0;
 }
