@@ -5,6 +5,7 @@ import 'package:leet_repeat_mobile_cross_platform/screens/home_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problem_details_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/settings_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
 import 'package:provider/provider.dart';
 
@@ -58,13 +59,17 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/problem-lists/:listId/problems/:problemId',
           builder: (context, state) => ProblemListProblemDetailsScreen(
-            problemListId: int.parse(state.pathParameters['listId']!),  
+            problemListId: int.parse(state.pathParameters['listId']!),
             probleId: int.parse(state.pathParameters['problemId']!),
           ),
         ),
         GoRoute(
           path: '/due-for-review',
           builder: (context, state) => DueForReviewScreen(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
         ),
       ],
     ),
