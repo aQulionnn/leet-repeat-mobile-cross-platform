@@ -9,6 +9,20 @@ class ProblemListRepository {
     return await db.insert('problem_list', problemList.toJson());
   }
 
+  Future<int> getOrCreateByName(String name) async {
+    final db = await _dbProvider.database;
+    final data = await db.query(
+      'problem_list',
+      where: 'name = ?',
+      whereArgs: [name],
+      limit: 1,
+    );
+
+    if (data.isNotEmpty) return data.first['id'] as int;
+
+    return db.insert('problem_list', {'name': name});
+  }
+
   Future<List<ProblemList>> getAll() async {
     final db = await _dbProvider.database;
     final data = await db.query('problem_list');

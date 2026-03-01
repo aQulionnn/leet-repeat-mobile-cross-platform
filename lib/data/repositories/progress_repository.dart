@@ -60,4 +60,24 @@ class ProgressRepository {
 
     return rows.map(DueForReviewDto.fromMap).toList();
   }
+
+  Future<List<DueForReviewDto>> getAllForExport() async {
+    final db = await _dbProvider.database;
+
+    final rows = await db.rawQuery('''
+      SELECT 
+        pr.*,
+        p.id as p_id,
+        p.question_id as p_question_id,
+        p.question as p_question,
+        p.difficulty as p_difficulty,
+        pl.id as pl_id,
+        pl.name as pl_name
+      FROM progress pr
+      JOIN problem p ON p.id = pr.problem_id
+      JOIN problem_list pl ON pl.id = pr.problem_list_id
+    ''');
+
+    return rows.map(DueForReviewDto.fromMap).toList();
+  }
 }

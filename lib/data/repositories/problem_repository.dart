@@ -1,4 +1,5 @@
 import 'package:leet_repeat_mobile_cross_platform/data/database_provider.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
 
 class ProblemRepository {
@@ -7,6 +8,28 @@ class ProblemRepository {
   Future<int> add(Problem problem) async {
     final db = await _dbProvider.database;
     return db.insert('problem', problem.toJson());
+  }
+
+  Future<int> getOrCreateByQuestionId({
+    required int questionId,
+    required String question,
+    required Difficulty difficulty,
+  }) async {
+    final db = await _dbProvider.database;
+    final data = await db.query(
+      'problem',
+      where: 'question_id = ?',
+      whereArgs: [questionId],
+      limit: 1,
+    );
+
+    if (data.isNotEmpty) return data.first['id'] as int;
+    
+    return db.insert('problem', {
+      'question_id': questionId,
+      'question': question,
+      'difficulty': difficulty.index,
+    });
   }
 
   Future<List<Problem>> getAll() async {
