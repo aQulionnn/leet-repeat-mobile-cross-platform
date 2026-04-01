@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/due_for_review_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/home_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/login_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problem_details_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/settings_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +42,20 @@ class MyApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   initialLocation: '/problem-lists',
+  redirect: (context, state) async {
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username');
+    final isLogin = state.matchedLocation == '/login';
+
+    if (username == null && !isLogin) return '/login';
+    if (username != null && isLogin) return '/problem-lists';
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) {
         return HomeScreen(child: child);
