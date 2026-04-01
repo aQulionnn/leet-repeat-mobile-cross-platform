@@ -2,6 +2,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/language_stats_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_problem_by_question_id_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_user_public_profile_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/skill_stats_response.dart';
 
 class LeetCodeClient {
   late final HttpLink _link;
@@ -114,5 +115,46 @@ class LeetCodeClient {
     return list
         .map((e) => LanguageStats.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<SkillStats?> getSkillStats(String username) async {
+    final response = await _client.query(
+      QueryOptions(
+        document: gql(r'''
+          query ($username: String!) {
+            matchedUser(username: $username) {
+              tagProblemCounts {
+                advanced {
+                  tagName
+                  tagSlug
+                  problemsSolved
+                }
+                intermediate {
+                  tagName
+                  tagSlug
+                  problemsSolved
+                }
+                fundamental {
+                  tagName
+                  tagSlug
+                  problemsSolved
+                }
+              }
+            }
+          }
+        '''),
+        variables: {'username': username},
+        fetchPolicy: FetchPolicy.noCache,
+      ),
+    );
+
+    if (response.hasException) throw response.exception!;
+
+    final matchedUser = response.data?['matchedUser'];
+    if (matchedUser == null) return null;
+
+    return SkillStats.fromJson(
+      matchedUser['tagProblemCounts'] as Map<String, dynamic>,
+    );
   }
 }
