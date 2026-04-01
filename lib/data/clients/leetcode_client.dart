@@ -2,6 +2,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/language_stats_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_problem_by_question_id_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_user_public_profile_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/question_progress_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/skill_stats_response.dart';
 
 class LeetCodeClient {
@@ -156,5 +157,44 @@ class LeetCodeClient {
     return SkillStats.fromJson(
       matchedUser['tagProblemCounts'] as Map<String, dynamic>,
     );
+  }
+
+  Future<QuestionProgress?> getQuestionProgress(String username) async {
+    final response = await _client.query(
+      QueryOptions(
+        document: gql(r'''
+          query ($userSlug: String!) {
+            userProfileUserQuestionProgressV2(userSlug: $userSlug) {
+              numAcceptedQuestions {
+                count
+                difficulty
+              }
+              numFailedQuestions {
+                count
+                difficulty
+              }
+              numUntouchedQuestions {
+                count
+                difficulty
+              }
+              userSessionBeatsPercentage {
+                difficulty
+                percentage
+              }
+              totalQuestionBeatsPercentage
+            }
+          }
+        '''),
+        variables: {'userSlug': username},
+        fetchPolicy: FetchPolicy.noCache,
+      ),
+    );
+
+    if (response.hasException) throw response.exception!;
+
+    final data = response.data?['userProfileUserQuestionProgressV2'];
+    if (data == null) return null;
+
+    return QuestionProgress.fromJson(data as Map<String, dynamic>);
   }
 }
