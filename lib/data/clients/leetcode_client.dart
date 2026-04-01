@@ -1,5 +1,6 @@
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_problem_by_question_id_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_user_public_profile_response.dart';
 
 class LeetCodeClient {
   late final HttpLink _link;
@@ -46,6 +47,40 @@ class LeetCodeClient {
 
     return GetProblemByQuestionIdResponse.fromJson(
       questions.first as Map<String, dynamic>,
+    );
+  }
+
+  Future<GetUserPublicProfileResponse?> getUserPublicProfile(
+    String username,
+  ) async {
+    final response = await _client.query(
+      QueryOptions(
+        document: gql(r'''
+          query ($username: String!) {
+            matchedUser(username: $username) {
+              username
+              githubUrl
+              profile {
+                ranking
+                userAvatar
+              }
+            }
+          }
+        '''),
+        variables: {'username': username},
+        fetchPolicy: FetchPolicy.noCache,
+      ),
+    );
+
+    if (response.hasException) {
+      throw response.exception!;
+    }
+
+    final matchedUser = response.data?['matchedUser'];
+    if (matchedUser == null) return null;
+
+    return GetUserPublicProfileResponse.fromJson(
+      matchedUser as Map<String, dynamic>,
     );
   }
 }
