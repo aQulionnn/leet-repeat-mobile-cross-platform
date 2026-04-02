@@ -7,6 +7,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -88,6 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       final all = await _progressRepository.getAllForExport();
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('username');
 
       final request = all
           .map(
@@ -100,6 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               problemQuestion: dto.problem.question,
               problemDifficulty: dto.problem.difficulty.index,
               problemListName: dto.problemList.name,
+              username: username,
             ),
           )
           .toList();
@@ -153,6 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             status: item.status,
             problemId: problemId,
             problemListId: problemListId,
+            username: item.username,
           ),
         );
       }

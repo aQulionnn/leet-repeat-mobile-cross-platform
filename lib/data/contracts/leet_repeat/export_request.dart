@@ -7,6 +7,7 @@ class ExportRequest {
   final String problemQuestion;
   final int problemDifficulty;
   final String problemListName;
+  final String? username;
 
   ExportRequest({
     required this.perceivedDifficulty,
@@ -17,6 +18,7 @@ class ExportRequest {
     required this.problemQuestion,
     required this.problemDifficulty,
     required this.problemListName,
+    this.username,
   });
 
   Map<String, dynamic> toJson() => {
@@ -28,5 +30,6 @@ class ExportRequest {
     'problemQuestion': problemQuestion,
     'problemDifficulty': problemDifficulty,
     'problemListName': problemListName,
+    'username': username,
   };
 }

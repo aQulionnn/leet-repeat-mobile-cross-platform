@@ -19,7 +19,7 @@ class DatabaseProvider {
     final path = join(databaseDirPath, 'leet_repeat.db');
     final database = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('PRAGMA foreign_keys = ON');
 
@@ -73,6 +73,12 @@ class DatabaseProvider {
           );
           await db.execute(
             'ALTER TABLE progress RENAME COLUMN next_review_at TO next_review_at_utc',
+          );
+        }
+
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE progress ADD COLUMN username TEXT',
           );
         }
       },

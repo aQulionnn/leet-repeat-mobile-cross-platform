@@ -9,6 +9,7 @@ class Progress {
   Status status;
   int problemId;
   int problemListId;
+  String? username;
 
   Progress({
     this.id,
@@ -18,6 +19,7 @@ class Progress {
     required this.status,
     required this.problemId,
     required this.problemListId,
+    this.username,
   });
 
   Map<String, dynamic> toJson() => {
@@ -28,6 +30,7 @@ class Progress {
     'status': status.index,
     'problem_id': problemId,
     'problem_list_id': problemListId,
+    'username': username,
   };
 
   factory Progress.fromJson(Map<String, dynamic> json) => Progress(
@@ -39,5 +42,6 @@ class Progress {
     status: Status.values[json['status']],
     problemId: json['problem_id'],
     problemListId: json['problem_list_id'],
+    username: json['username'],
   );
 }

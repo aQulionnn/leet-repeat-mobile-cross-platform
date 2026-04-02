@@ -12,6 +12,7 @@ class ImportResponse {
   final String problemQuestion;
   final Difficulty problemDifficulty;
   final String problemListName;
+  final String? username;
 
   ImportResponse({
     required this.id,
@@ -23,6 +24,7 @@ class ImportResponse {
     required this.problemQuestion,
     required this.problemDifficulty,
     required this.problemListName,
+    this.username,
   });
 
   factory ImportResponse.fromJson(Map<String, dynamic> json) => ImportResponse(
@@ -35,5 +37,6 @@ class ImportResponse {
     problemQuestion: json['problem_question'],
     problemDifficulty: Difficulty.values[json['problem_difficulty']],
     problemListName: json['problem_list_name'],
+    username: json['username'],
   );
 }

@@ -2,6 +2,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/database_provider.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/dtos/due_for_review_dto.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProgressRepository {
   final _dbProvider = DatabaseProvider.instance;
@@ -23,6 +24,11 @@ class ProgressRepository {
 
   Future<int> upsert(Progress progress) async {
     final db = await _dbProvider.database;
+
+    if (progress.username == null) {
+      final prefs = await SharedPreferences.getInstance();
+      progress.username = prefs.getString('username');
+    }
 
     if (progress.id == null) {
       return db.insert('progress', progress.toJson());
