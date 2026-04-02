@@ -6,8 +6,10 @@ import 'package:leet_repeat_mobile_cross_platform/screens/login_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problem_details_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/profile_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/settings_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
+import 'package:leet_repeat_mobile_cross_platform/utils/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,6 +27,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+        ChangeNotifierProvider(create: (_) => UserProvider()..init()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {
@@ -52,10 +55,7 @@ final GoRouter _router = GoRouter(
     return null;
   },
   routes: [
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     ShellRoute(
       builder: (context, state, child) {
         return HomeScreen(child: child);
@@ -85,6 +85,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
         ),
       ],
     ),
