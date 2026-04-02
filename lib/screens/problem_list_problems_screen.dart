@@ -31,13 +31,25 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
   int? _questionId;
   PerceivedDifficulty? _perceivedDifficulty;
   int? _problemId;
+  Status? _statusFilter;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Center(child: _problemListProblems()),
-        Positioned(bottom: 24, right: 24, child: _addProblemListProblem()),
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _statusFilterDropdown(),
+              const SizedBox(width: 12),
+              _addProblemListProblem(),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -47,7 +59,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
     final tt = Theme.of(context).textTheme;
 
     return FutureBuilder(
-      future: _problemListProblemRepository.getByList(widget.problemListId),
+      future: _getFilteredProblems(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -85,7 +97,10 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
               const Divider(height: 1, indent: 16, endIndent: 16),
           itemBuilder: (context, index) {
             final p = problems[index];
-            final (diffLabel, diffColor) = _difficultyColor(context, p.difficulty);
+            final (diffLabel, diffColor) = _difficultyColor(
+              context,
+              p.difficulty,
+            );
 
             return ListTile(
               onTap: () => context.push(
@@ -142,6 +157,78 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
       case Difficulty.hard:
         return ('Hard', isLightMode ? Colors.red : Colors.redAccent);
     }
+  }
+
+  Future<List<Problem>> _getFilteredProblems() async {
+    final problemListProblems = await _problemListProblemRepository.getByList(
+      widget.problemListId,
+    );
+
+    if (_statusFilter == null) {
+      return problemListProblems
+          .map((p) => p as Problem?)
+          .whereType<Problem>()
+          .toList();
+    }
+
+    final filtered = <Problem>[];
+    for (final problem in problemListProblems) {
+      final progress = await _progressRepository.getByProblemAndList(
+        problem.id!,
+        widget.problemListId,
+      );
+
+      if (progress?.status == _statusFilter) {
+        filtered.add(problem);
+      }
+    }
+
+    return filtered;
+  }
+
+  Widget _statusFilterDropdown() {
+    final cs = Theme.of(context).colorScheme;
+    final label = _statusFilter?.label ?? 'All';
+
+    return FloatingActionButton(
+      mini: true,
+      backgroundColor: cs.secondaryContainer,
+      onPressed: () {
+        showMenu(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            MediaQuery.sizeOf(context).width - 120,
+            MediaQuery.sizeOf(context).height - 140,
+            24,
+            24,
+          ),
+          items: [
+            PopupMenuItem(
+              value: null,
+              child: Text(_statusFilter == null ? '✓ All' : 'All'),
+              onTap: () {
+                setState(() => _statusFilter = null);
+              },
+            ),
+            ...Status.values.map(
+              (status) => PopupMenuItem(
+                value: status,
+                child: Text(
+                  _statusFilter == status ? '✓ ${status.label}' : status.label,
+                ),
+                onTap: () {
+                  setState(() => _statusFilter = status);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 
   Widget _addProblemListProblem() {
