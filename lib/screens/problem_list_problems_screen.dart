@@ -32,6 +32,8 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
   PerceivedDifficulty? _perceivedDifficulty;
   int? _problemId;
   Status? _statusFilter;
+  Difficulty? _difficultyFilter;
+  PerceivedDifficulty? _perceivedDifficultyFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,10 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _statusFilterDropdown(),
+              const SizedBox(width: 8),
+              _difficultyFilterDropdown(),
+              const SizedBox(width: 8),
+              _perceivedDifficultyFilterDropdown(),
               const SizedBox(width: 12),
               _addProblemListProblem(),
             ],
@@ -164,23 +170,28 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
       widget.problemListId,
     );
 
-    if (_statusFilter == null) {
-      return problemListProblems
-          .map((p) => p as Problem?)
-          .whereType<Problem>()
-          .toList();
-    }
-
     final filtered = <Problem>[];
     for (final problem in problemListProblems) {
+      if (_difficultyFilter != null &&
+          problem.difficulty != _difficultyFilter) {
+        continue;
+      }
+
       final progress = await _progressRepository.getByProblemAndList(
         problem.id!,
         widget.problemListId,
       );
 
-      if (progress?.status == _statusFilter) {
-        filtered.add(problem);
+      if (_statusFilter != null && progress?.status != _statusFilter) {
+        continue;
       }
+
+      if (_perceivedDifficultyFilter != null &&
+          progress?.perceivedDifficulty != _perceivedDifficultyFilter) {
+        continue;
+      }
+
+      filtered.add(problem);
     }
 
     return filtered;
@@ -188,7 +199,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
 
   Widget _statusFilterDropdown() {
     final cs = Theme.of(context).colorScheme;
-    final label = _statusFilter?.label ?? 'All';
+    final label = _statusFilter?.label ?? 'Status';
 
     return FloatingActionButton(
       mini: true,
@@ -197,7 +208,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
         showMenu(
           context: context,
           position: RelativeRect.fromLTRB(
-            MediaQuery.sizeOf(context).width - 120,
+            MediaQuery.sizeOf(context).width - 180,
             MediaQuery.sizeOf(context).height - 140,
             24,
             24,
@@ -226,7 +237,103 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
       },
       child: Text(
         label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _difficultyFilterDropdown() {
+    final cs = Theme.of(context).colorScheme;
+    final label = _difficultyFilter?.name.capitalize() ?? 'Diff';
+
+    return FloatingActionButton(
+      mini: true,
+      backgroundColor: cs.secondaryContainer,
+      onPressed: () {
+        showMenu(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            MediaQuery.sizeOf(context).width - 240,
+            MediaQuery.sizeOf(context).height - 140,
+            24,
+            24,
+          ),
+          items: [
+            PopupMenuItem(
+              value: null,
+              child: Text(_difficultyFilter == null ? '✓ All' : 'All'),
+              onTap: () {
+                setState(() => _difficultyFilter = null);
+              },
+            ),
+            ...Difficulty.values.map(
+              (difficulty) => PopupMenuItem(
+                value: difficulty,
+                child: Text(
+                  _difficultyFilter == difficulty
+                      ? '✓ ${difficulty.name.capitalize()}'
+                      : difficulty.name.capitalize(),
+                ),
+                onTap: () {
+                  setState(() => _difficultyFilter = difficulty);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _perceivedDifficultyFilterDropdown() {
+    final cs = Theme.of(context).colorScheme;
+    final label = _perceivedDifficultyFilter?.label ?? 'Perc';
+
+    return FloatingActionButton(
+      mini: true,
+      backgroundColor: cs.secondaryContainer,
+      onPressed: () {
+        showMenu(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            MediaQuery.sizeOf(context).width - 280,
+            MediaQuery.sizeOf(context).height - 140,
+            24,
+            24,
+          ),
+          items: [
+            PopupMenuItem(
+              value: null,
+              child: Text(_perceivedDifficultyFilter == null ? '✓ All' : 'All'),
+              onTap: () {
+                setState(() => _perceivedDifficultyFilter = null);
+              },
+            ),
+            ...PerceivedDifficulty.values.map(
+              (perceivedDifficulty) => PopupMenuItem(
+                value: perceivedDifficulty,
+                child: Text(
+                  _perceivedDifficultyFilter == perceivedDifficulty
+                      ? '✓ ${perceivedDifficulty.label}'
+                      : perceivedDifficulty.label,
+                ),
+                onTap: () {
+                  setState(
+                    () => _perceivedDifficultyFilter = perceivedDifficulty,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -400,4 +507,11 @@ DateTime _addMonths(DateTime date, int months) {
     date.millisecond,
     date.microsecond,
   );
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
 }
