@@ -82,8 +82,18 @@ class ProgressRepository {
       FROM progress pr
       JOIN problem p ON p.id = pr.problem_id
       JOIN problem_list pl ON pl.id = pr.problem_list_id
+      WHERE pr.last_synced_at_utc IS NULL OR pr.last_solved_at_utc > pr.last_synced_at_utc
     ''');
 
     return rows.map(DueForReviewDto.fromMap).toList();
+  }
+
+  Future<void> markAsSynced(List<int> progressIds) async {
+    final db = await _dbProvider.database;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await db.execute(
+      'UPDATE progress SET last_synced_at_utc = ? WHERE id IN (${progressIds.map((_) => '?').join(',')})',
+      [now, ...progressIds],
+    );
   }
 }

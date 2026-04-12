@@ -110,6 +110,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       final response = await _client.export(request);
 
+      await _progressRepository.markAsSynced(all.map((e) => e.progress.id!).toList());
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
