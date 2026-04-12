@@ -110,7 +110,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       final response = await _client.export(request);
 
-      await _progressRepository.markAsSynced(all.map((e) => e.progress.id!).toList());
+      await _progressRepository.markAsSynced(
+        all.map((e) => e.progress.id!).toList(),
+      );
 
       if (!mounted) return;
 
@@ -132,6 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       final items = await _client.import();
+      final List<int> importedIds = [];
 
       for (final item in items) {
         int problemListId = await _problemListRepository.getOrCreateByName(
@@ -151,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
 
-        await _progressRepository.upsert(
+        final progressId = await _progressRepository.upsert(
           Progress(
             perceivedDifficulty: item.perceivedDifficulty,
             lastSolvedAtUtc: item.lastSolvedAtUtc ?? '',
@@ -162,7 +165,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             username: item.username,
           ),
         );
+
+        importedIds.add(progressId);
       }
+
+      await _progressRepository.markAsSynced(importedIds);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
