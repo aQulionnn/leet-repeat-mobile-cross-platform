@@ -34,12 +34,18 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
   Status? _statusFilter;
   Difficulty? _difficultyFilter;
   PerceivedDifficulty? _perceivedDifficultyFilter;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Center(child: _problemListProblems()),
+        Column(
+          children: [
+            _searchBar(),
+            Expanded(child: Center(child: _problemListProblems())),
+          ],
+        ),
         Positioned(
           bottom: 24,
           right: 24,
@@ -94,7 +100,31 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
           );
         }
 
-        final problems = snapshot.data!;
+        final filteredProblems = snapshot.data!
+            .where(
+              (problem) => problem.question.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ),
+            )
+            .toList();
+
+        if (filteredProblems.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.search_off_outlined, size: 48, color: cs.outline),
+                const SizedBox(height: 12),
+                Text(
+                  'No problems found',
+                  style: tt.bodyLarge?.copyWith(color: cs.outline),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final problems = filteredProblems;
 
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
@@ -475,6 +505,32 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
         );
       },
       child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _searchBar() {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 48, 16, 0),
+      child: TextField(
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          hintText: 'Search problems...',
+          prefixIcon: Icon(Icons.search, color: cs.outline),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.close, color: cs.outline),
+                  onPressed: () => setState(() => _searchQuery = ''),
+                )
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      ),
     );
   }
 }
