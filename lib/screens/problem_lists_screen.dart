@@ -13,12 +13,18 @@ class ProblemListsScreen extends StatefulWidget {
 class _ProblemListsScreenState extends State<ProblemListsScreen> {
   final ProblemListRepository _problemListRepository = ProblemListRepository();
   String? _problemListName = '';
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Center(child: _problemLists()),
+        Column(
+          children: [
+            _searchBar(),
+            Expanded(child: Center(child: _problemLists())),
+          ],
+        ),
         Positioned(bottom: 24, right: 24, child: _addProblemListButton()),
       ],
     );
@@ -58,12 +64,35 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
           );
         }
 
+        final filteredLists = snapshot.data!
+            .where(
+              (list) =>
+                  list.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+            )
+            .toList();
+
+        if (filteredLists.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.search_off_outlined, size: 48, color: cs.outline),
+                const SizedBox(height: 12),
+                Text(
+                  'No lists found',
+                  style: tt.bodyLarge?.copyWith(color: cs.outline),
+                ),
+              ],
+            ),
+          );
+        }
+
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
-          itemCount: snapshot.data!.length,
+          itemCount: filteredLists.length,
           separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final item = snapshot.data![index];
+            final item = filteredLists[index];
 
             return Dismissible(
               key: ValueKey(item.id),
@@ -268,6 +297,32 @@ class _ProblemListsScreenState extends State<ProblemListsScreen> {
         setState(() {});
       },
       child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _searchBar() {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 48, 16, 0),
+      child: TextField(
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          hintText: 'Search lists...',
+          prefixIcon: Icon(Icons.search, color: cs.outline),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.close, color: cs.outline),
+                  onPressed: () => setState(() => _searchQuery = ''),
+                )
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      ),
     );
   }
 }
