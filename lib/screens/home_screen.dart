@@ -36,6 +36,10 @@ class HomeScreen extends StatelessWidget {
                       icon: Icon(Icons.person_outline),
                       label: Text('Profile'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.bar_chart),
+                      label: Text('Statistics'),
+                    ),
                   ],
                   selectedIndex: _selectedIndex(location),
                   onDestinationSelected: (value) {
@@ -47,6 +51,8 @@ class HomeScreen extends StatelessWidget {
                       context.push('/settings');
                     } else if (value == 3) {
                       context.push('/profile');
+                    } else if (value == 4) {
+                      context.push('/statistics');
                     }
                   },
                   trailing: Expanded(
@@ -84,5 +90,6 @@ int _selectedIndex(String location) {
   if (location.startsWith('/due-for-review')) return 1;
   if (location.startsWith('/settings')) return 2;
   if (location.startsWith('/profile')) return 3;
+  if (location.startsWith('/statistics')) return 4;
   return 0;
 }

@@ -8,6 +8,7 @@ import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/profile_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/settings_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/statistics_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -89,6 +90,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/statistics',
+          builder: (context, state) => const StatisticsScreen(),
         ),
       ],
     ),
