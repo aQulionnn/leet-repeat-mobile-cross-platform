@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/due_for_review_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/home_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/login_screen.dart';
@@ -9,13 +10,31 @@ import 'package:leet_repeat_mobile_cross_platform/screens/problem_lists_screen.d
 import 'package:leet_repeat_mobile_cross_platform/screens/profile_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/settings_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/statistics_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/utils/notification_service.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/theme.dart';
 import 'package:leet_repeat_mobile_cross_platform/utils/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await NotificationService.instance.init();
+    await NotificationService.instance.scheduleDailyReminder();
+  } catch (e) {
+    debugPrint('Notification init error: $e');
+  }
+
+  final progressRepo = ProgressRepository();
+  final nowUtc = DateTime.now().toUtc();
+  final boundary = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day)
+      .add(const Duration(hours: 168))
+      .toIso8601String();
+  final items = await progressRepo.getDueForReview(boundary);
+  if (items.isNotEmpty) {
+    await NotificationService.instance.showDueReviewNotification(items.length);
+  }
 
   runApp(const MyApp());
 }
