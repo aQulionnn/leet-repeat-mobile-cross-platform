@@ -59,6 +59,8 @@ class DatabaseProvider {
             status INTEGER NOT NULL,
             problem_id INTEGER NOT NULL,
             problem_list_id INTEGER NOT NULL,
+            username TEXT,
+            last_synced_at_utc TEXT,
             FOREIGN KEY (problem_id) REFERENCES problem(id) ON DELETE CASCADE,
             FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE
           )
