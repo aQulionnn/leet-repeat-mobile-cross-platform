@@ -2,6 +2,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/database_provider.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/dtos/due_for_review_dto.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProgressRepository {
@@ -100,5 +101,17 @@ class ProgressRepository {
       'UPDATE progress SET last_synced_at_utc = ? WHERE id IN (${progressIds.map((_) => '?').join(',')})',
       [now, ...progressIds],
     );
+  }
+
+  // ProgressRepository
+  Future<List<ProgressEvent>> getEvents(int progressId) async {
+    final db = await _dbProvider.database;
+    final rows = await db.query(
+      'progress_event',
+      where: 'progress_id = ?',
+      whereArgs: [progressId],
+      orderBy: 'solved_at_utc DESC',
+    );
+    return rows.map(ProgressEvent.fromJson).toList();
   }
 }

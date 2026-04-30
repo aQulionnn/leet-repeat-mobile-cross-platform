@@ -4,6 +4,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficult
 import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/enums/difficulty.dart';
@@ -28,7 +29,7 @@ class _ProblemListProblemDetailsScreenState
   final ProblemRepository _problemRepository = ProblemRepository();
   final ProgressRepository _progressRepository = ProgressRepository();
 
-  late Future<(Problem?, Progress?)> _data;
+  late Future<(Problem?, Progress?, List<ProgressEvent>)> _data;
 
   @override
   void initState() {
@@ -36,13 +37,16 @@ class _ProblemListProblemDetailsScreenState
     _data = _load();
   }
 
-  Future<(Problem?, Progress?)> _load() async {
+  Future<(Problem?, Progress?, List<ProgressEvent>)> _load() async {
     final problem = await _problemRepository.getById(widget.probleId);
     final progress = await _progressRepository.getByProblemAndList(
       widget.probleId,
       widget.problemListId,
     );
-    return (problem, progress);
+    final events = progress != null
+        ? await _progressRepository.getEvents(progress.id!)
+        : <ProgressEvent>[];
+    return (problem, progress, events);
   }
 
   @override
@@ -50,7 +54,7 @@ class _ProblemListProblemDetailsScreenState
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return FutureBuilder<(Problem?, Progress?)>(
+    return FutureBuilder<(Problem?, Progress?, List<ProgressEvent>)>(
       future: _data,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -60,7 +64,7 @@ class _ProblemListProblemDetailsScreenState
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
-        final (problem, progress) = snapshot.data!;
+        final (problem, progress, events) = snapshot.data!;
 
         if (problem == null) {
           return const Center(child: Text('Problem not found'));
@@ -187,6 +191,84 @@ class _ProblemListProblemDetailsScreenState
                   ),
                 ),
               ],
+              if (events.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'History',
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  elevation: 0,
+                  color: cs.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      children: events.asMap().entries.map((entry) {
+                        final isLast = entry.key == events.length - 1;
+                        final event = entry.value;
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: cs.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _formatDate(event.solvedAtUtc),
+                                      style: tt.bodySmall?.copyWith(
+                                        color: cs.outline,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: cs.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      event.perceivedDifficulty.label,
+                                      style: tt.labelSmall?.copyWith(
+                                        color: cs.onSecondaryContainer,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!isLast)
+                              const Divider(
+                                height: 1,
+                                indent: 28,
+                                endIndent: 20,
+                              ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -242,18 +324,18 @@ class _DifficultyChip extends StatelessWidget {
   }
 }
 
-  (String, Color) _difficultyColor(BuildContext context, Difficulty d) {
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
+(String, Color) _difficultyColor(BuildContext context, Difficulty d) {
+  final isLightMode = Theme.of(context).brightness == Brightness.light;
 
-    switch (d) {
-      case Difficulty.easy:
-        return ('Easy', isLightMode ? Colors.green : Colors.greenAccent);
-      case Difficulty.medium:
-        return ('Medium', isLightMode ? Colors.orange : Colors.orangeAccent);
-      case Difficulty.hard:
-        return ('Hard', isLightMode ? Colors.red : Colors.redAccent);
-    }
+  switch (d) {
+    case Difficulty.easy:
+      return ('Easy', isLightMode ? Colors.green : Colors.greenAccent);
+    case Difficulty.medium:
+      return ('Medium', isLightMode ? Colors.orange : Colors.orangeAccent);
+    case Difficulty.hard:
+      return ('Hard', isLightMode ? Colors.red : Colors.redAccent);
   }
+}
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
