@@ -19,7 +19,7 @@ class DatabaseProvider {
     final path = join(databaseDirPath, 'leet_repeat.db');
     final database = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute('PRAGMA foreign_keys = ON');
 
@@ -65,6 +65,16 @@ class DatabaseProvider {
             FOREIGN KEY (problem_list_id) REFERENCES problem_list(id) ON DELETE CASCADE
           )
         ''');
+
+        await db.execute('''
+          CREATE TABLE progress_event (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+              progress_id INTEGER NOT NULL,
+              perceived_difficulty INTEGER NOT NULL,
+              solved_at_utc TEXT NOT NULL,
+              FOREIGN KEY (progress_id) REFERENCES progress(id) ON DELETE CASCADE
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -88,6 +98,18 @@ class DatabaseProvider {
           await db.execute(
             'ALTER TABLE progress ADD COLUMN last_synced_at_utc TEXT',
           );
+        }
+
+        if (oldVersion < 5) {
+          await db.execute('''
+            CREATE TABLE progress_event (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              progress_id INTEGER NOT NULL,
+              perceived_difficulty INTEGER NOT NULL,
+              solved_at_utc TEXT NOT NULL,
+              FOREIGN KEY (progress_id) REFERENCES progress(id) ON DELETE CASCADE
+            )
+          ''');
         }
       },
     );

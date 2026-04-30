@@ -24,22 +24,27 @@ class ProgressRepository {
 
   Future<int> upsert(Progress progress) async {
     final db = await _dbProvider.database;
-
-    if (progress.username == null) {
-      final prefs = await SharedPreferences.getInstance();
-      progress.username = prefs.getString('username');
-    }
+    int id;
 
     if (progress.id == null) {
-      return db.insert('progress', progress.toJson());
+      id = await db.insert('progress', progress.toJson());
+    } else {
+      await db.update(
+        'progress',
+        progress.toJson(),
+        where: 'id = ?',
+        whereArgs: [progress.id],
+      );
+      id = progress.id!;
     }
 
-    return db.update(
-      'progress',
-      progress.toJson(),
-      where: 'id = ?',
-      whereArgs: [progress.id],
-    );
+    await db.insert('progress_event', {
+      'progress_id': id,
+      'perceived_difficulty': progress.perceivedDifficulty.index,
+      'solved_at_utc': progress.lastSolvedAtUtc,
+    });
+
+    return id;
   }
 
   Future<List<DueForReviewDto>> getDueForReview(String nowIso) async {
