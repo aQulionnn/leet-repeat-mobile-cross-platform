@@ -22,8 +22,8 @@ class LeetRepeatClient {
     return ExportResponse.fromJson(jsonDecode(response.body));
   }
 
-  Future<List<ImportResponse>> import() async {
-    final response = await http.get(Uri.parse(baseUrl));
+  Future<List<ImportResponse>> import(String username) async {
+    final response = await http.get(Uri.parse('$baseUrl?username=$username'),);
 
     if (response.statusCode != 200) {
       throw Exception('Import failed: ${response.body}');

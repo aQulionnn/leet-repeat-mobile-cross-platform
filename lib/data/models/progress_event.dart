@@ -1,13 +1,13 @@
 import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
 
 class ProgressEvent {
-  final int id;
+  int? id;
   final int progressId;
   final PerceivedDifficulty perceivedDifficulty;
   final String solvedAtUtc;
 
   ProgressEvent({
-    required this.id,
+    this.id,
     required this.progressId,
     required this.perceivedDifficulty,
     required this.solvedAtUtc,

@@ -3,7 +3,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/dtos/due_for_review_dto.d
 import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 class ProgressRepository {
   final _dbProvider = DatabaseProvider.instance;
@@ -103,7 +103,6 @@ class ProgressRepository {
     );
   }
 
-  // ProgressRepository
   Future<List<ProgressEvent>> getEvents(int progressId) async {
     final db = await _dbProvider.database;
     final rows = await db.query(
@@ -113,5 +112,14 @@ class ProgressRepository {
       orderBy: 'solved_at_utc DESC',
     );
     return rows.map(ProgressEvent.fromJson).toList();
+  }
+
+  Future<void> insertEvent(ProgressEvent event) async {
+    final db = await _dbProvider.database;
+    await db.insert('progress_event', {
+      'progress_id': event.progressId,
+      'perceived_difficulty': event.perceivedDifficulty.index,
+      'solved_at_utc': event.solvedAtUtc,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

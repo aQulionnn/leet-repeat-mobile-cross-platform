@@ -8,6 +8,7 @@ class ExportRequest {
   final int problemDifficulty;
   final String problemListName;
   final String? username;
+  final List<ExportProgressEvent> events;
 
   ExportRequest({
     required this.perceivedDifficulty,
@@ -19,6 +20,7 @@ class ExportRequest {
     required this.problemDifficulty,
     required this.problemListName,
     this.username,
+    this.events = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,5 +33,21 @@ class ExportRequest {
     'problemDifficulty': problemDifficulty,
     'problemListName': problemListName,
     'username': username,
+    'events': events.map((e) => e.toJson()).toList(),
+  };
+}
+
+class ExportProgressEvent {
+  final int perceivedDifficulty;
+  final String solvedAtUtc;
+
+  ExportProgressEvent({
+    required this.perceivedDifficulty,
+    required this.solvedAtUtc,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'perceivedDifficulty': perceivedDifficulty,
+    'solvedAtUtc': solvedAtUtc,
   };
 }

@@ -7,6 +7,7 @@ import 'package:leet_repeat_mobile_cross_platform/data/enums/status.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem_list_problem.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
@@ -482,7 +483,7 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                         ? Status.mastered
                         : Status.practicing;
 
-                    await _progressRepository.upsert(
+                    final progressId = await _progressRepository.upsert(
                       Progress(
                         perceivedDifficulty: perceivedDifficulty,
                         lastSolvedAtUtc: nowUtc.toIso8601String(),
@@ -490,6 +491,14 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
                         status: status,
                         problemId: problemId,
                         problemListId: widget.problemListId,
+                      ),
+                    );
+
+                    await _progressRepository.insertEvent(
+                      ProgressEvent(
+                        progressId: progressId,
+                        perceivedDifficulty: _perceivedDifficulty!,
+                        solvedAtUtc: nowUtc.toIso8601String(),
                       ),
                     );
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/clients/leet_repeat_client.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leet_repeat/export_request.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/enums/perceived_difficulty.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/problem_list_problem.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/models/progress.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_problem_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_list_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/problem_repository.dart';
@@ -92,21 +94,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final prefs = await SharedPreferences.getInstance();
       final username = prefs.getString('username');
 
-      final request = all
-          .map(
-            (dto) => ExportRequest(
-              perceivedDifficulty: dto.progress.perceivedDifficulty.index,
-              status: dto.progress.status.index,
-              lastSolvedAtUtc: dto.progress.lastSolvedAtUtc,
-              nextReviewAtUtc: dto.progress.nextReviewAtUtc,
-              problemQuestionId: dto.problem.questionId,
-              problemQuestion: dto.problem.question,
-              problemDifficulty: dto.problem.difficulty.index,
-              problemListName: dto.problemList.name,
-              username: username,
-            ),
-          )
-          .toList();
+      final request = await Future.wait(
+        all.map((dto) async {
+          final events = await _progressRepository.getEvents(dto.progress.id!);
+          return ExportRequest(
+            perceivedDifficulty: dto.progress.perceivedDifficulty.index,
+            status: dto.progress.status.index,
+            lastSolvedAtUtc: dto.progress.lastSolvedAtUtc,
+            nextReviewAtUtc: dto.progress.nextReviewAtUtc,
+            problemQuestionId: dto.problem.questionId,
+            problemQuestion: dto.problem.question,
+            problemDifficulty: dto.problem.difficulty.index,
+            problemListName: dto.problemList.name,
+            username: username,
+            events: events
+                .map(
+                  (e) => ExportProgressEvent(
+                    perceivedDifficulty: e.perceivedDifficulty.index,
+                    solvedAtUtc: e.solvedAtUtc,
+                  ),
+                )
+                .toList(),
+          );
+        }),
+      );
 
       final response = await _client.export(request);
 
@@ -121,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      print("ERROR: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
@@ -133,7 +145,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _importLoading = true);
 
     try {
-      final items = await _client.import();
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('username') ?? '';
+      final items = await _client.import(username);
       final List<int> importedIds = [];
 
       for (final item in items) {
@@ -162,9 +176,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             status: item.status,
             problemId: problemId,
             problemListId: problemListId,
-            username: item.username,
           ),
         );
+
+        for (final event in item.events) {
+          if (event.solvedAtUtc == null) continue;
+          await _progressRepository.insertEvent(
+            ProgressEvent(
+              progressId: progressId,
+              perceivedDifficulty:
+                  PerceivedDifficulty.values[event.perceivedDifficulty],
+              solvedAtUtc: event.solvedAtUtc!,
+            ),
+          );
+        }
 
         importedIds.add(progressId);
       }

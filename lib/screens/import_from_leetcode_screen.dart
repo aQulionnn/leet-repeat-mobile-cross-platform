@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/models/progress_event.dart';
 import 'package:provider/provider.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/clients/leetcode_client.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/question_detail_response.dart';
@@ -120,7 +121,7 @@ class _ImportFromLeetCodeScreenState extends State<ImportFromLeetCodeScreen> {
             ? Status.mastered
             : Status.practicing;
 
-        await _progressRepository.upsert(
+        final progressId = await _progressRepository.upsert(
           Progress(
             perceivedDifficulty: _perceivedDifficulty,
             lastSolvedAtUtc: nowUtc.toIso8601String(),
@@ -131,6 +132,14 @@ class _ImportFromLeetCodeScreenState extends State<ImportFromLeetCodeScreen> {
             status: status,
             problemId: problemId,
             problemListId: widget.problemListId,
+          ),
+        );
+
+        await _progressRepository.insertEvent(
+          ProgressEvent(
+            progressId: progressId,
+            perceivedDifficulty: _perceivedDifficulty,
+            solvedAtUtc: nowUtc.toIso8601String(),
           ),
         );
 
