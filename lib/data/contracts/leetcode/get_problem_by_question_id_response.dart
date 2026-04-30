@@ -12,11 +12,11 @@ class GetProblemByQuestionIdResponse {
   factory GetProblemByQuestionIdResponse.fromJson(Map<String, dynamic> json) {
     return GetProblemByQuestionIdResponse(
       question: '${json['questionFrontendId']}. ${json['title']}',
-      difficulty: _mapDifficulty(json['difficulty']),
+      difficulty: mapDifficulty(json['difficulty']),
     );
   }
 
-  static Difficulty _mapDifficulty(String difficulty) {
+  static Difficulty mapDifficulty(String difficulty) {
     switch (difficulty) {
       case 'Easy':
         return Difficulty.easy;

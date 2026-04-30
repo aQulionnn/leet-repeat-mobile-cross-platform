@@ -2,7 +2,9 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/language_stats_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_problem_by_question_id_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/get_user_public_profile_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/question_detail_response.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/question_progress_response.dart';
+import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/recent_ac_submission.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/contracts/leetcode/skill_stats_response.dart';
 
 class LeetCodeClient {
@@ -196,5 +198,55 @@ class LeetCodeClient {
     if (data == null) return null;
 
     return QuestionProgress.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<List<RecentAcSubmission>> getRecentAcSubmissions(
+    String username, {
+    int limit = 5,
+  }) async {
+    final response = await _client.query(
+      QueryOptions(
+        document: gql(r'''
+        query ($username: String!, $limit: Int!) {
+          recentAcSubmissionList(username: $username, limit: $limit) {
+            titleSlug
+            title
+          }
+        }
+      '''),
+        variables: {'username': username, 'limit': limit},
+        fetchPolicy: FetchPolicy.noCache,
+      ),
+    );
+
+    if (response.hasException) throw response.exception!;
+
+    final list = response.data?['recentAcSubmissionList'] as List<dynamic>;
+    return list.map((e) => RecentAcSubmission.fromJson(e)).toList();
+  }
+
+  Future<QuestionDetailResponse?> getQuestionDetail(String titleSlug) async {
+    final response = await _client.query(
+      QueryOptions(
+        document: gql(r'''
+        query ($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            questionId
+            title
+            difficulty
+          }
+        }
+      '''),
+        variables: {'titleSlug': titleSlug},
+        fetchPolicy: FetchPolicy.noCache,
+      ),
+    );
+
+    if (response.hasException) throw response.exception!;
+
+    final data = response.data?['question'];
+    if (data == null) return null;
+
+    return QuestionDetailResponse.fromJson(data as Map<String, dynamic>);
   }
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:leet_repeat_mobile_cross_platform/data/repositories/progress_repository.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/due_for_review_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/home_screen.dart';
+import 'package:leet_repeat_mobile_cross_platform/screens/import_from_leetcode_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/login_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problem_details_screen.dart';
 import 'package:leet_repeat_mobile_cross_platform/screens/problem_list_problems_screen.dart';
@@ -28,9 +29,11 @@ void main() async {
 
   final progressRepo = ProgressRepository();
   final nowUtc = DateTime.now().toUtc();
-  final boundary = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day)
-      .add(const Duration(hours: 168))
-      .toIso8601String();
+  final boundary = DateTime.utc(
+    nowUtc.year,
+    nowUtc.month,
+    nowUtc.day,
+  ).add(const Duration(hours: 168)).toIso8601String();
   final items = await progressRepo.getDueForReview(boundary);
   if (items.isNotEmpty) {
     await NotificationService.instance.showDueReviewNotification(items.length);
@@ -88,6 +91,12 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/problem-lists/:id',
           builder: (context, state) => ProblemListProblemsScreen(
+            problemListId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: '/problem-lists/:id/import',
+          builder: (context, state) => ImportFromLeetCodeScreen(
             problemListId: int.parse(state.pathParameters['id']!),
           ),
         ),

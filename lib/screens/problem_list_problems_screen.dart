@@ -48,16 +48,24 @@ class _ProblemListProblemsScreenState extends State<ProblemListProblemsScreen> {
         ),
         Positioned(
           bottom: 24,
-          right: 24,
+          right: 8,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _statusFilterDropdown(),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _difficultyFilterDropdown(),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _perceivedDifficultyFilterDropdown(),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
+              FloatingActionButton.small(
+                heroTag: 'import',
+                onPressed: () => context.push(
+                  '/problem-lists/${widget.problemListId}/import',
+                ),
+                child: const Icon(Icons.download_outlined),
+              ),
+              const SizedBox(width: 6),
               _addProblemListProblem(),
             ],
           ),
